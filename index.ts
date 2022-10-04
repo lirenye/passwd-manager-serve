@@ -1,9 +1,14 @@
 import express from 'express'
 import { port } from './config';
-const app = express();
+import logger from './utils/logger'
+import dbConnect from './utils/dbConnect';
+import initMiddleware from './middleware';
 
+const app = express();
+initMiddleware(app);
 
 
 app.listen(port, async ()=>{
-  console.log(`server start at http://localhost:${port}`)
+  await dbConnect();
+  logger.info(`server start at http://localhost:${port}`)
 })

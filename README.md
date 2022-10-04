@@ -37,13 +37,13 @@
   },
   username: {
     type: String,
-    required: {true, '没有用户名'},
+    required: [true, '没有用户名'],
     maxLength: [10, '用户名大于10个字符'],
     trim: true
   },
   password: {
     type: String,
-    required: {true, '没有密码'},
+    required: [true, '没有密码'],
     maxLength: [10, '用户名大于10个字符'],
     trim: true
   },
