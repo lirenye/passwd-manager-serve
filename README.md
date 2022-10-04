@@ -72,7 +72,8 @@
 
  - 登陆接口
  ```js
- method: post
+ method: post,
+ path: /login
 //  request
 {
   username: string,

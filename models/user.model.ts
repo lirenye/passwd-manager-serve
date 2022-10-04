@@ -1,6 +1,6 @@
 import mongoose, { Document } from "mongoose";
 
-export interface UserDocument extends Document {
+export interface UserDocument {
   username: string
   password: string
 };
@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, '没有用户名'],
       minLength: [4, '用户名小于4个字符'],
-      maxLength: [6, '用户名大于6个字符'],
+      maxLength: [8, '用户名大于8个字符'],
       trim: true
     },
     password: {
