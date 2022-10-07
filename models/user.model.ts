@@ -5,7 +5,7 @@ export interface UserDocument {
   password: string
 };
 
-const userSchema = new mongoose.Schema(
+const UserSchema = new mongoose.Schema(
   {
     username: {
       type: String,
@@ -24,6 +24,6 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-const UserModel = mongoose.model<UserDocument>('User', userSchema);
+const UserModel = mongoose.model<UserDocument>('user', UserSchema);
 
 export default UserModel;

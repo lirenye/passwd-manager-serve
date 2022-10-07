@@ -1,4 +1,4 @@
-export let port: number = 3000;
+export const port: number = 3000;
 
 // mongodb
 import { ConnectOptions } from "mongoose";
