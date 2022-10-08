@@ -1,42 +1,41 @@
-import UserModel, { UserDocument } from "./models/user.model"
-import AccountModel from "./models/account.model";
-import logger from "./utils/logger";
+import mongoose from "mongoose";
+import { UserDocument, UserSchema} from "./models/user.model";
+import { mongoConf, dbURI } from "./config";
+import logger from './utils/logger'
 
-// 数据库初始化
-// init()
+(async function () {
+  // 连接数据库
+  const connection = mongoose.createConnection(dbURI, mongoConf);
+  const user =  connection.model('user', UserSchema);
 
-// 创建新用户
-// createUser({username: 'test', password: '123456'})
+  // 创建新用户
+  // await createUser({username: '', password: ''});
+  
 
-finds();
+  // 查看所有账户信息
+  logger.info(await user.find());
 
-async function finds() {
-  const data = await UserModel.findOne({username: 'lirenye'});
-  logger.info(data);
-}
-
-async function init() {
-  try {
-    UserModel.createCollection();
-    logger.info('用户集合创建完毕');
-    AccountModel.createCollection();
-    logger.info('账户集合创建完毕')
-  } catch (error) {
-    logger.error(error);
-    logger.error('初始化失败');
+  async function createUser(userInfo:UserDocument) {
+    try {
+      new user(userInfo).validateSync();
+      logger.info('新用户信息验证通过');
+      const userData = await user.create(userInfo);
+      logger.info(userData)
+      logger.info('新用户创建成功');
+    } catch (error) {
+      logger.error(error);
+      logger.error('新用户创建失败');
+    }
   }
-}
 
-async function createUser(userInfo: UserDocument){
-  try {
-    const user = new UserModel(userInfo);
-    await user.validate();
-    logger.info('通过验证')
-    await user.save();
-    logger.info('保存成功')
-    logger.info(UserModel.db)
-  } catch (error) {
-    logger.error(error)
-    logger.error('验证失败');
-  }
-}
+  // close db
+  await connection.close()
+  logger.info('关闭连接中')
+})()
+
+// createUer({username: 'lirenye', password: '123456'});
+
+// async function createUer(userInfo: UserDocument) {
+//   const createData = await UserModel.create(userInfo);
+//   logger.info(createData);
+// }

@@ -1,11 +1,11 @@
-import mongoose, { Document } from "mongoose";
+import mongoose from "mongoose";
 
 export interface UserDocument {
   username: string
   password: string
 };
 
-const UserSchema = new mongoose.Schema(
+export const UserSchema = new mongoose.Schema(
   {
     username: {
       type: String,
