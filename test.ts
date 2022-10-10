@@ -11,9 +11,10 @@ import logger from './utils/logger'
   // 创建新用户
   // await createUser({username: '', password: ''});
   
-
+  // 验证用户信息
+  await validUser({username: 'qwqwqwqw',password: '123456'})
   // 查看所有账户信息
-  logger.info(await user.find());
+  // logger.info(await user.find());
 
   async function createUser(userInfo:UserDocument) {
     try {
@@ -25,6 +26,16 @@ import logger from './utils/logger'
     } catch (error) {
       logger.error(error);
       logger.error('新用户创建失败');
+    }
+  };
+
+  async function validUser(userInfo:UserDocument) {
+    try{
+      await new user(userInfo).validate();
+      logger.info('验证通过')
+    }catch(error){
+      logger.error(error);
+      logger.error('验证失败')
     }
   }
 
