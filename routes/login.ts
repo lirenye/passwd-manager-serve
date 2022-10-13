@@ -9,7 +9,7 @@ UserRouter.post('/login',async (req: Request, res: Response)=>{
   try {
     await new UserModel(req.body).validate()
   } catch (err) {
-    return res.send({data: null, meta: {
+    return res.send({data: err, meta: {
       status: 201,
       msg: '参数未通过检查'
     }});

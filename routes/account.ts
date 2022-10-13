@@ -44,7 +44,9 @@ AccountRouter.get('/info', async (req: Request, res: Response)=>{
 
 
 // 修改账户信息接口
-// AccountRouter.get('')
+AccountRouter.get('/test', (req: Request, res: Response)=>{
+  return res.send('ok')
+})
 
 
 export default AccountRouter;

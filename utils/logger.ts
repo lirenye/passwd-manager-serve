@@ -6,4 +6,6 @@ const logger = pino({
   }
 });
 
+global.logger = logger;
+
 export default logger;
