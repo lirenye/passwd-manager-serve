@@ -11,6 +11,10 @@ export interface Account {
 
 const AccountSchema = new mongoose.Schema(
   {
+    author: {
+      type: String,
+      required: [true, '没有所属者']
+    },
     platform: {
       type: String,
       required: [true, '没有平台名称'],

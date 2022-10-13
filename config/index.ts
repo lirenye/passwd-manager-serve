@@ -13,5 +13,5 @@ export const dbURI: string = 'mongodb://localhost:27017/passwdmanager'
 import { Secret, SignOptions } from "jsonwebtoken";
 export const privateKey: Secret = 'JD23K2H35K2';
 export const options: SignOptions ={
-  expiresIn: 60
+  expiresIn: '1h'
 }

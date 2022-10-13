@@ -1,17 +1,19 @@
-import { Response, Request, Router } from "express";
+import { Response, Request, Router, NextFunction } from "express";
 import AccountModel from "../models/account.model";
-import logger from "../utils/logger";
+import { Req } from "../module";
 
 const AccountRouter = Router();
 
 // 添加账户信息接口
-AccountRouter.post('/add',async (req: Request, res: Response)=>{
+AccountRouter.post('/add',async (req: Req, res: Response, next: NextFunction)=>{
+  const saveData = Object.assign(req.body,{ author: req.token._id});
   // 检验数据
   try {
-    await new AccountModel(req.body).validate();
+    await new AccountModel(saveData).validate();
   } catch (error) {
-    return res.send({data: null, meta: {status: 201, mes: '参数未通过验证'}});
+    return res.send({data: error, meta: {status: 201, mes: '参数未通过验证'}});
   };
+
 
   // 存储数据
   try {
