@@ -26,12 +26,15 @@ import { mongoConf, dbURI } from "./config";
   // }));
 
   // 修改账户信息
-  console.log(await accout.updateOne(
-    {_id: "63481675122914f8439945bf"},
-    {$set: {
-      password: '222277'
-    }}
-  ))
+  // console.log(await accout.updateOne(
+  //   {_id: "63481675122914f8439945bf"},
+  //   {$set: {
+  //     password: '222277'
+  //   }}
+  // ))
+
+  // 删除账户信息
+  console.log(await accout.deleteOne({platform: 'test5'}));
 
   async function createUser(userInfo:UserDocument) {
     try {

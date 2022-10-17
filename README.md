@@ -104,8 +104,8 @@
  path: /account/info
 //  request
  {
-  query: string,
-  type: enum: {}
+  type: string,
+  value: string
  }
 //  response
 {
@@ -138,12 +138,6 @@ Option One
   email: string,
   mobile: string,
   remark: string
-}
-
-Option Tow
-{
-  _id: ObjectId,
-  modifyed: array[]
 }
 
 // response

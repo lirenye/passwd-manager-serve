@@ -114,6 +114,26 @@ AccountRouter.post('/modify',async (req: Request, res: Response)=>{
   } catch (error) {
     return res.send({data: null, meta: {status: 200, msg: '修改失败'}});
   };
+});
+
+// 删除账户信息接口
+AccountRouter.get('/delete', async (req: Request, res: Response)=>{
+  // parse token info
+  const {_id: userId} = verifyToken(req.headers.authorization!);
+  // get account ObjectId
+  const accountId: string = req.query._id as string;
+
+  // validation accountId
+  if(!accountId) return res.send({data: null, meta: {status: 201, msg: '删除失败'}});
+
+  // delete account info
+  try {
+    const {acknowledged, deletedCount} = await AccountModel.deleteOne({_id: accountId, author: userId});
+    if(acknowledged && deletedCount == 1) return res.send({data: null, meta: {status: 200, msg: '删除成功'}});
+    else return res.send({data: null, meta: {status: 201, msg: '删除失败'}});
+  } catch (error) {
+    res.send({data: null, meta: {status: 201, msg: '删除失败'}});
+  }
 })
 
 
