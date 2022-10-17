@@ -71,10 +71,49 @@ AccountRouter.get('/info', async (req: Request, res: Response)=>{
   return res.send({data: dbData, total: dbData.length, meta: {status: 200, msg: '查询成功'}})
 });
 
+interface ReqModify {
+  _id?: string;
+  author?: string;
+  platform: string;
+  username: string;
+  password: string;
+  email: string;
+  mobile: string;
+  remark: string;
+}
 
 // 修改账户信息接口
-AccountRouter.get('/test', (req: Request, res: Response)=>{
-  return res.send('ok')
+AccountRouter.post('/modify',async (req: Request, res: Response)=>{
+  // parse token info
+  const {_id: userId} = verifyToken(req.headers.authorization!);
+
+  // handle request params
+  const account:ReqModify = {...req.body};
+  const accountId = account._id;
+  delete account['_id'];
+  account['author'] = userId;
+
+  // validation request params
+  try {
+    await new AccountModel(account).validate();
+  } catch (error) {
+    return res.send({data: error, meta: {status: 201, msg: '参数未通过验证'}});
+  };
+
+  // delete author
+  delete account['author'];
+
+  // go update account info
+  try {
+    const {acknowledged} = await AccountModel.updateOne(
+      {_id: accountId, author: userId},
+      {$set: account}
+    );
+    if(acknowledged) return res.send({data: null, meta: {status: 200, msg: '修改成功'}});
+    else return res.send({data: null, meta: {status: 201, msg: '修改失败'}});
+  } catch (error) {
+    return res.send({data: null, meta: {status: 200, msg: '修改失败'}});
+  };
 })
 
 

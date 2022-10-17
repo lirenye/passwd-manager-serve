@@ -17,13 +17,21 @@ import { mongoConf, dbURI } from "./config";
   // 查看所有用户信息
   // console.log(await user.find());
 
-  // 查看所以账户信息
-  console.log(await accout.find({
-    author: '63416bbc6fbecdd7704ffd5c',
-    platform: {
-      "$regex": /test4/
-    }
-  }));
+  // 查看账户信息
+  // console.log(await accout.find({
+  //   author: '63416bbc6fbecdd7704ffd5c',
+  //   platform: {
+  //     "$regex": /test4/
+  //   }
+  // }));
+
+  // 修改账户信息
+  console.log(await accout.updateOne(
+    {_id: "63481675122914f8439945bf"},
+    {$set: {
+      password: '222277'
+    }}
+  ))
 
   async function createUser(userInfo:UserDocument) {
     try {
