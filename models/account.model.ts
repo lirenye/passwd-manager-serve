@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 export interface Account {
+  author: string,
   platform: string,
   username: string,
   password: string,
@@ -9,7 +10,7 @@ export interface Account {
   remark: string
 }
 
-const AccountSchema = new mongoose.Schema(
+export const AccountSchema = new mongoose.Schema(
   {
     author: {
       type: String,

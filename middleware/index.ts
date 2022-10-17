@@ -4,6 +4,7 @@ import cors from 'cors'
 import { parseToken} from './preparse'
 
 function initMiddleware(app: Express) {
+  app.use(express.static('public'));
   app.use(cors());
   app.use(express.json());
   app.use(express.urlencoded());

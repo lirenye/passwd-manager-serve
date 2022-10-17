@@ -29,6 +29,10 @@
  存储账户信息
  ```js
  Schema({
+  author: {
+    type: string,
+    required: [true, '没有所属者']
+  },
   platform: {
     type: String,
     required: [true, '没有平台名称'],

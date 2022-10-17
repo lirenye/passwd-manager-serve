@@ -5,6 +5,7 @@ import { signToken } from '../utils/jwt';
 const UserRouter = Router()
 
 UserRouter.post('/login',async (req: Request, res: Response)=>{
+  if(!Object.keys(req.body).length) return res.send({data: null, meta:{status: 201, msg: '没有参数'}})
   // 请求数据检测
   try {
     await new UserModel(req.body).validate()

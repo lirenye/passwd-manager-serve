@@ -1,17 +1,18 @@
 import { Response, Request, Router, NextFunction } from "express";
 import AccountModel from "../models/account.model";
-import { Req } from "../module";
+import { verifyToken } from "../utils/jwt";
 
 const AccountRouter = Router();
 
 // 添加账户信息接口
-AccountRouter.post('/add',async (req: Req, res: Response, next: NextFunction)=>{
-  const saveData = Object.assign(req.body,{ author: req.token._id});
+AccountRouter.post('/add',async (req: Request, res: Response, next: NextFunction)=>{
+  const token = verifyToken(req.headers.authorization!);
+  const saveData = Object.assign(req.body,{ author: token._id});
   // 检验数据
   try {
     await new AccountModel(saveData).validate();
   } catch (error) {
-    return res.send({data: error, meta: {status: 201, mes: '参数未通过验证'}});
+    return res.send({data: error, meta: {status: 201, msg: '参数未通过验证'}});
   };
 
 
@@ -19,23 +20,49 @@ AccountRouter.post('/add',async (req: Req, res: Response, next: NextFunction)=>{
   try {
     await AccountModel.create(req.body);
   } catch (error) {
-    return res.send({data: null, meta: {status: 201, mes: '存储失败'}});
+    return res.send({data: null, meta: {status: 201, msg: '存储失败'}});
   };
 
-  return res.send({data: null, meta: {status: 200, mes: '保存成功'}});
+  return res.send({data: null, meta: {status: 200, msg: '保存成功'}});
 });
 
 
 // 查询账户信息接口
+interface QueryFilter {
+  platform?: {
+    $regex: RegExp
+  };
+  mobile?: {
+    $regex: RegExp
+  };
+  email?: {
+    $regex: RegExp
+  };
+};
+
+interface ReqQuery {
+  type?: 'platform' | 'mobile' | 'email';
+  value?: string;
+}
 AccountRouter.get('/info', async (req: Request, res: Response)=>{
+  const reqQuery: ReqQuery = req.query;
+  const {_id} = verifyToken(req.headers.authorization!);
+  const queryFilter:QueryFilter = {[reqQuery.type!]: {
+    $regex: new RegExp(reqQuery.value!, 'i')
+  }};
+  // queryFilter[reqQuery.type!] = { $regex: new RegExp(reqQuery.value!, 'i')}
   // 检验参数
   const allow = ['platform', 'mobile', 'email'];
-  const queryType = Object.keys(req.body)
+  
+  const queryType = Object.keys(queryFilter)
   if(allow.indexOf(queryType[0]) === -1) return res.send({data: null, meta: {status: 201, msg: '查询参数错误'}});
 
+  // 查询规则
+  const queryData = Object.assign(queryFilter, {author:_id});
+  console.log(queryData);
   // 查询数据
   try{
-    var dbData = await AccountModel.find(req.body)
+    var dbData = await AccountModel.find(queryData);
   }catch(error){
     return res.send({data: null, meta: { status: 201, msg: '查询错误'}})
   };
