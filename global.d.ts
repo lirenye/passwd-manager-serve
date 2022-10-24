@@ -1,5 +1,4 @@
-
-declare namespace logger {
-  const info: any;
-  const error: any;
-}
+// declare namespace logger {
+//   function info(msg: string | undefined): void;
+//   function error(msg: string | undefined): void;
+// }

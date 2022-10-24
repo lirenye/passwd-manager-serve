@@ -6,7 +6,8 @@ import { verifyToken } from "../utils/jwt";
 
 export function parseToken(req: Request, res: Response, next: NextFunction){
   const token = req.headers.authorization!;
-  if(req.path === '/login') return next();
+  const connection = ['/login', '/test', '/code']
+  if(connection.indexOf(req.path) !== -1) return next();
   
   try {
     verifyToken(token);

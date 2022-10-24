@@ -22,6 +22,23 @@
     minLength: [6, '密码小于6个字符'],
     maxLength: [10, '密码大于10个字符'],
     trim: true
+  },
+  email: {
+    type: String,
+    required: [true, '没有电子邮箱'],
+    maxLengh: [30, '电子邮箱最大30个字符'],
+    trim: true
+  },
+  code: {
+    type: String,
+    minLength: [6, '验证码小于6个字符'],
+    maxLength: [6, '验证码大于6个字符'],
+    trim: true
+  },
+  CodeLastTime: {
+    type: String,
+    maxLength: [30, '验证码过期时间戳长度大于30个字符'],
+    trim: true
   }
  })
  ```
@@ -187,4 +204,22 @@ path: /account/add
     message: string
   }
 }
+```
+
+## 验证码接口
+ - 获取用户信息，并且验证用户信息、过期时间
+ - 生成验证码和过期时间，并存入数据库中
+ - 调用函数发送验证码
+ - 返回发送结果
+```typescript
+// request params
+method: post
+path: '/code'
+{
+  username: string,
+  password: string
+}
+
+// response data
+{data: null, meta: {status: number, msg: string}}
 ```
