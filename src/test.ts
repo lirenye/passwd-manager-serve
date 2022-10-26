@@ -21,15 +21,14 @@ import { mongoConf, dbURI } from "./config";
   //   code: '123456',
   //   CodeLastTime: '1234623423'
   // }).validateSync())
-  // 查看所有用户信息
-  console.log(await user.find());
 
   // 修改用户信息
-  // console.log(await user.updateOne({username: 'lirenye'},{$set: {
-  //   email: '2694613297@qq.com',
-  //   code: '123456',
-  //   CodeLastTime: '1234123'
-  // }}))
+  console.log(await user.updateOne({username: 'lirenye'},{$unset: {
+    __v: 1
+  }}));
+
+  // 查看所有用户信息
+  console.log(await user.find({username: 'lirenye'}));
 
   // 查看账户信息
   // console.log(await accout.find({
@@ -52,9 +51,9 @@ import { mongoConf, dbURI } from "./config";
 
   const date = new Date();
   // 获取当前时间
-  const localTime: number = (date.getTime() + 28800000);
-  const localDate = new Date(localTime);
-  console.log(localDate);
+  // const localTime: number = (date.getTime() + 28800000);
+  // const localDate = new Date(localTime);
+  // console.log(localDate);
 
   // 验证码
   // const math = Math.random() * 10

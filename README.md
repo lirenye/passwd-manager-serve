@@ -37,6 +37,11 @@
   },
   CodeLastTime: {
     type: String,
+    maxLength: [30, '验证码下次发送时间戳长度大于30个字符'],
+    trim: true
+  },
+  CodeExpiration: {
+    type: String,
     maxLength: [30, '验证码过期时间戳长度大于30个字符'],
     trim: true
   }
@@ -208,7 +213,7 @@ path: /account/add
 
 ## 验证码接口
  - 获取用户信息，并且验证用户信息、过期时间
- - 生成验证码和过期时间，并存入数据库中
+ - 生成验证码、下次可发送时间、过期时间，并存入数据库中
  - 调用函数发送验证码
  - 返回发送结果
 ```typescript

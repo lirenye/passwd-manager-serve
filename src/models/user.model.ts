@@ -35,6 +35,11 @@ export const UserSchema = new mongoose.Schema(
     },
     CodeLastTime: {
       type: String,
+      maxLength: [30, '验证码下次发送时间戳长度大于30个字符'],
+      trim: true
+    },
+    CodeExpiration: {
+      type: String,
       maxLength: [30, '验证码过期时间戳长度大于30个字符'],
       trim: true
     }

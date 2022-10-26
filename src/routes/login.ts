@@ -28,8 +28,8 @@ UserRouter.post('/login',async (req: Request, res: Response)=>{
   }});
 
   // get token
-  const {_id, username, password} = data[0]
-  const token = signToken({_id, username, password});
+  const {_id, username} = data[0]
+  const token = signToken({_id, username});
   return res.send({data:{token}, meta: {status: 200, msg: '登陆成功'}});
 });
 
@@ -47,7 +47,6 @@ interface DBUserInfo {
   email: string,
   code: string
   CodeLastTime: string,
-  __v?: any
 }
 UserRouter.post("/code", async (req: Request, res: Response)=>{
   // 获取用户信息
@@ -79,16 +78,18 @@ UserRouter.post("/code", async (req: Request, res: Response)=>{
   // 获取验证码过期时间
   const localTime = LocalTime();
   const CodeLastTime: string = (localTime + 59000).toString();
+  const CodeExpiration: string = (localTime + 300000).toString();
   // 存储验证码
   try{
     const {acknowledged, modifiedCount} = await UserModel.updateOne(userInfo,{
       $set: {
         code,
-        CodeLastTime
+        CodeLastTime,
+        CodeExpiration
       }
     });
     console.log(code);
-    if(!(acknowledged && modifiedCount)) return res.send({data: null, meta: {status: 201, msg: 'verify code error'}});
+    if(!(acknowledged || modifiedCount)) return res.send({data: null, meta: {status: 201, msg: 'verify code error'}});
   }catch(error){
     console.log(error);
     console.error('存储验证码部分报错');
@@ -107,8 +108,7 @@ UserRouter.post("/code", async (req: Request, res: Response)=>{
 
 UserRouter.get('/outlogin', async (req: Request, res: Response)=>{
   const token:string | undefined = req.headers.authorization;
-  if (!token) return res.send();
-  const {_id} = verifyToken(token);
+  const {_id} = verifyToken(token as string);
   const nowTime = LocalTime().toString();
   try{
     const {acknowledged, modifiedCount} = await UserModel.updateOne({_id},{
@@ -119,7 +119,7 @@ UserRouter.get('/outlogin', async (req: Request, res: Response)=>{
     });
     if(acknowledged && modifiedCount === 1) return res.send({data: null, meta: {status: 200, msg: '退出登陆成功'}});
   }catch(error){
-    return res.send();
+    return res.send({data: null, meta: {status: 200, msg: '清除下次发送验证码时间限制失败'}});
   }
 })
 
