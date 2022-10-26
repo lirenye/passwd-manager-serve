@@ -13,7 +13,8 @@ export const dbURI: string = 'mongodb://localhost:27017/passwdmanager'
 import { Secret, SignOptions } from "jsonwebtoken";
 export const privateKey: Secret = 'JD23K2H35K2';
 export const options: SignOptions ={
-  expiresIn: '1h'
+  // token 有效时间
+  expiresIn: '1m'
 };
 
 // nodemail

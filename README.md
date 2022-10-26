@@ -228,3 +228,10 @@ path: '/code'
 // response data
 {data: null, meta: {status: number, msg: string}}
 ```
+
+## 登陆接口
+ - 获取用户信息
+ - 查询、验证用户信息
+ - 验证`验证码`过期时间
+ - 使用用户数据获取token
+ - 返回登陆信息与token

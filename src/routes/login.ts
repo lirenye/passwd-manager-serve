@@ -6,6 +6,17 @@ import LocalTime from '../utils/time';
 
 const UserRouter = Router()
 
+// 数据库用户信息接口
+interface DBUserInfo {
+  _id: string,
+  username: string,
+  password: string,
+  email: string,
+  code: string
+  CodeLastTime: string,
+  CodeExpiration: string
+}
+
 UserRouter.post('/login',async (req: Request, res: Response)=>{
   if(!Object.keys(req.body).length) return res.send({data: null, meta:{status: 201, msg: '没有参数'}})
   // 请求数据检测
@@ -20,15 +31,27 @@ UserRouter.post('/login',async (req: Request, res: Response)=>{
 
   // 获取用户信息
   // const data = await UserModel.create(req.body);
-  const data = await UserModel.find(req.body);
+  try {
+    var data:Array<DBUserInfo> = await UserModel.find(req.body);
+  } catch (error) {
+    console.log(error);
+    console.log('登陆接口：查询用户信息报错');
+  }
   // 查询无结果
-  if(!(data.length)) return res.send({data: null, meta: {
+  if(!(data!.length)) return res.send({data: null, meta: {
     status: 201,
     msg: '密码账号或验证码错误'
   }});
 
+  // 验证“验证码”是否有效
+  const localTime = LocalTime().toString();
+  if(data![0].CodeExpiration < localTime) return res.send({data: null, meta: {
+    status: 201,
+    msg: '验证码已过期'
+  }});
+
   // get token
-  const {_id, username} = data[0]
+  const {_id, username} = data![0]
   const token = signToken({_id, username});
   return res.send({data:{token}, meta: {status: 200, msg: '登陆成功'}});
 });
@@ -38,16 +61,9 @@ UserRouter.post('/login',async (req: Request, res: Response)=>{
 interface UserInfo {
   username: string,
   password: string,
-  code?: string
+  code?: string,
 };
-interface DBUserInfo {
-  _id: string,
-  username: string,
-  password: string,
-  email: string,
-  code: string
-  CodeLastTime: string,
-}
+
 UserRouter.post("/code", async (req: Request, res: Response)=>{
   // 获取用户信息
   const userInfo: UserInfo = req.body;
@@ -74,7 +90,20 @@ UserRouter.post("/code", async (req: Request, res: Response)=>{
   // 获取验证码
   const random = Math.random()
   console.log(random);
-  let code: string = Math.floor(random * 1000000).toString();
+  let code: string = Math.floor(random * 1000000000).toString();
+  // 首个字符为零导致个数不正确的问题
+  let codeArr = code.split('');
+  function clear(codearr: string[]):(string | ((codearr: string[])=> string)){
+    if(codearr.indexOf('0') !== 0){
+      return codearr.splice(0,6).join('');
+    }else{
+      codearr.shift();
+      return clear(codearr);
+    }
+  }
+
+  code = clear(codeArr) as string;
+  
   // 获取验证码过期时间
   const localTime = LocalTime();
   const CodeLastTime: string = (localTime + 59000).toString();
@@ -106,6 +135,7 @@ UserRouter.post("/code", async (req: Request, res: Response)=>{
   return res.send({data: code, meta: {status: 200, msg: '验证码发送成功'}});
 });
 
+// 推出登陆接口
 UserRouter.get('/outlogin', async (req: Request, res: Response)=>{
   const token:string | undefined = req.headers.authorization;
   const {_id} = verifyToken(token as string);
