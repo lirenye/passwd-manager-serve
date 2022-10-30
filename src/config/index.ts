@@ -25,7 +25,9 @@ export const emailConf = {
   secure: true,
 
   // auth
+  // 邮箱账户
   user: '',
+  // 开启第三方登陆时提供的密码
   pass: ''
 }
 

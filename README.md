@@ -1,8 +1,5 @@
-# 目录
-## config
-```js
-// 存放配置数据
-```
+## 配置
+需要在`/src/config/index.ts`中配置相关信息
 
 # 集合
  - user  
