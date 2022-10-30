@@ -23,7 +23,7 @@ export const UserSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      required: [true, '没有电子游戏'],
+      required: [true, '没有电子邮箱'],
       maxLength: [30, '电子邮箱最大30个字符'],
       trim: true
     },

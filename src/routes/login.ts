@@ -4,7 +4,7 @@ import { signToken, verifyToken } from '../utils/jwt';
 import sendEmail from '../utils/email'
 import LocalTime from '../utils/time';
 
-const UserRouter = Router()
+const LoginRouter = Router()
 
 // 数据库用户信息接口
 interface DBUserInfo {
@@ -17,7 +17,7 @@ interface DBUserInfo {
   CodeExpiration: string
 }
 
-UserRouter.post('/login',async (req: Request, res: Response)=>{
+LoginRouter.post('/login',async (req: Request, res: Response)=>{
   if(!Object.keys(req.body).length) return res.send({data: null, meta:{status: 201, msg: '没有参数'}})
   // 请求数据检测
   // try {
@@ -64,7 +64,7 @@ interface UserInfo {
   code?: string,
 };
 
-UserRouter.post("/code", async (req: Request, res: Response)=>{
+LoginRouter.post("/code", async (req: Request, res: Response)=>{
   // 获取用户信息
   const userInfo: UserInfo = req.body;
   delete userInfo['code'];
@@ -124,19 +124,19 @@ UserRouter.post("/code", async (req: Request, res: Response)=>{
     console.error('存储验证码部分报错');
   }
   // 发送验证码
-  try {
-    const EmailError = await sendEmail(dbUserData![0].email, code);
-    if(EmailError) return res.send({data: null, meta: {status: 201, msg: 'verify code error'}});
-  } catch (error) {
-    console.log(error);
-    console.error('发送验证码部分报错');
-  }
+  // try {
+  //   const EmailError = await sendEmail(dbUserData![0].email, code);
+  //   if(EmailError) return res.send({data: null, meta: {status: 201, msg: 'verify code error'}});
+  // } catch (error) {
+  //   console.log(error);
+  //   console.error('发送验证码部分报错');
+  // }
 
   return res.send({data: code, meta: {status: 200, msg: '验证码发送成功'}});
 });
 
 // 推出登陆接口
-UserRouter.get('/outlogin', async (req: Request, res: Response)=>{
+LoginRouter.get('/outlogin', async (req: Request, res: Response)=>{
   const token:string | undefined = req.headers.authorization;
   const {_id} = verifyToken(token as string);
   const nowTime = LocalTime().toString();
@@ -153,4 +153,4 @@ UserRouter.get('/outlogin', async (req: Request, res: Response)=>{
   }
 })
 
-export default UserRouter;
+export default LoginRouter;

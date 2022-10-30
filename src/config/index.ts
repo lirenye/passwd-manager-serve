@@ -14,7 +14,7 @@ import { Secret, SignOptions } from "jsonwebtoken";
 export const privateKey: Secret = 'JD23K2H35K2';
 export const options: SignOptions ={
   // token 有效时间
-  expiresIn: '1m'
+  expiresIn: '1h'
 };
 
 // nodemail

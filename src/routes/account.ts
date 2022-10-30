@@ -59,7 +59,7 @@ AccountRouter.get('/info', async (req: Request, res: Response)=>{
 
   // 查询规则
   const queryData = Object.assign(queryFilter, {author:_id});
-  console.log(queryData);
+  // console.log(queryData);
   // 查询数据
   try{
     var dbData = await AccountModel.find(queryData);
