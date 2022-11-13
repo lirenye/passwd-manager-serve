@@ -18,7 +18,8 @@
     "mongoose": "^6.6.3",
     "nodemailer": "^6.8.0",
     "pino": "^8.6.1",
-    "pino-pretty": "^9.1.0"
+    "pino-pretty": "^9.1.0",
+    "simple-crypto-js": "^3.0.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.12",

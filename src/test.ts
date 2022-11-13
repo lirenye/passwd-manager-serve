@@ -2,12 +2,18 @@ import mongoose from "mongoose";
 import { UserDocument, UserSchema} from "./models/user.model";
 import {AccountSchema} from './models/account.model'
 import { mongoConf, dbURI } from "./config";
+import { Decrypt, Encrypt } from "./utils/simple-crypto";
 
 (async function () {
   // 连接数据库
   const connection = mongoose.createConnection(dbURI, mongoConf);
   const user =  connection.model('user', UserSchema);
   const accout = connection.model('account', AccountSchema)
+
+  const secret = 'test'
+  const data = Encrypt(secret, {say: 'haha'});
+  console.log(data);
+  console.log(Decrypt(secret+'1234' ,data))
 
   // 创建新用户
   // await createUser({username: '', password: ''});
@@ -23,12 +29,12 @@ import { mongoConf, dbURI } from "./config";
   // }).validateSync())
 
   // 修改用户信息
-  console.log(await user.updateOne({username: 'lirenye'},{$unset: {
-    __v: 1
-  }}));
+  // console.log(await user.updateOne({username: 'lirenye'},{$unset: {
+  //   __v: 1
+  // }}));
 
   // 查看所有用户信息
-  console.log(await user.find({username: 'lirenye'}));
+  // console.log(await user.find({username: 'lirenye'}));
 
   // 查看账户信息
   // console.log(await accout.find({
@@ -49,7 +55,7 @@ import { mongoConf, dbURI } from "./config";
   // 删除账户信息
   // console.log(await accout.deleteOne({platform: 'test5'}));
 
-  const date = new Date();
+  // const date = new Date();
   // 获取当前时间
   // const localTime: number = (date.getTime() + 28800000);
   // const localDate = new Date(localTime);
