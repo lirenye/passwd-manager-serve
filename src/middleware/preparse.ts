@@ -12,10 +12,7 @@ export function parseToken(req: Request, res: Response, next: NextFunction){
   try {
     verifyToken(token);
   } catch (error) {
-    return res.send({data: null, meta: {
-      status: 401,
-      msg: '认证过期'
-    }});
+    return res.status(401).send('认证过期')
   }
   next();
 }
