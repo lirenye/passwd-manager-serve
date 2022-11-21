@@ -1,9 +1,7 @@
 import { sign, verify, JwtPayload } from "jsonwebtoken";
 import { privateKey, options } from "../config";
-import { UserDocument } from "../models/user.model";
 
 export function signToken(payload: any){
-  console.log(payload)
   return sign(payload, privateKey, options);
 };
 
