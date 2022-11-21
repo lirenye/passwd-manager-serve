@@ -3,7 +3,7 @@ import UserModel from '../models/user.model';
 import { signToken, verifyToken } from '../utils/jwt';
 import sendEmail from '../utils/email'
 import LocalTime, { FormatLog } from '../utils/time';
-import { Decrypt } from '../utils/simple-crypto';
+import { Decrypt, Encrypt } from '../utils/simple-crypto';
 
 const LoginRouter = Router()
 
@@ -17,54 +17,82 @@ interface DBUserInfo {
   CodeLastTime: string,
   CodeExpiration: string
 }
-
+interface LoginRequestInterface {
+  username: string;
+  password: string;
+  code: string;
+}
 LoginRouter.post('/login',async (req: Request, res: Response)=>{
   if(!Object.keys(req.body).length) return res.send({data: null, meta:{status: 201, msg: '没有参数'}})
-  // 请求数据检测
-  // try {
-  //   await new UserModel(req.body).validate()
-  // } catch (err) {
-  //   return res.send({data: err, meta: {
-  //     status: 201,
-  //     msg: '参数未通过检查'
-  //   }});
-  // }
+  // 获取请求数据
+  const ReqTime = <string>req.headers.time;
+  const ReqSecrypt = ReqTime;
+  const ReqData = <string>req.body.data;
 
-  // 获取用户信息
-  // const data = await UserModel.create(req.body);
+  // 解密请求数据
+  let loginRequestData:LoginRequestInterface;
   try {
-    var data:Array<DBUserInfo> = await UserModel.find(req.body);
+    const decryptData = Decrypt(ReqSecrypt, ReqData);
+    if (decryptData === 'error') throw '登陆接口请求数据报错';
+    loginRequestData = <LoginRequestInterface>decryptData;
+  }catch(error){
+    FormatLog('ERROR', (loginRequestData!.username || '未知'), <string>error);
+    return res.send({data: null, meta: { status: 201, msg: '登陆错误'}});
+  };
+
+  // 从数据库中查询用户数据
+  let dbUserDataArray: Array<DBUserInfo>
+  try {
+    dbUserDataArray = await UserModel.find({
+      username: loginRequestData.username,
+      password: loginRequestData.password,
+      code: loginRequestData.code
+    });
   } catch (error) {
-    console.log(error);
-    console.log('登陆接口：查询用户信息报错');
-  }
-  // 查询无结果
-  if(!(data!.length)) return res.send({data: null, meta: {
-    status: 201,
-    msg: '密码账号或验证码错误'
-  }});
+    FormatLog('ERROR', (loginRequestData!.username || '未知'), '查询数据库用户信息报错');
+    return res.send({data: null, meta: { status: 201, msg: '登陆错误'}});
+  };
+
+  // 验证数据用户数据
+  if(!dbUserDataArray.length) return res.send({data: null, meta: {status: 201, msg: '请检查登陆信息'}});
+
+  // 获取数据库中的用户信息
+  const dbUserData = dbUserDataArray[0];
 
   // 验证“验证码”是否有效
   const localTime = LocalTime().toString();
-  if(data![0].CodeExpiration < localTime) return res.send({data: null, meta: {
+  if(dbUserData.CodeExpiration < localTime) return res.send({data: null, meta: {
     status: 201,
     msg: '验证码已过期'
   }});
 
-  // get token
-  const {_id, username} = data![0]
-  const token = signToken({_id, username});
-  return res.send({data:{token}, meta: {status: 200, msg: '登陆成功'}});
+  // 请求数据通过准备返回数据
+  const token = signToken({
+    _id: dbUserData._id,
+    username: dbUserData.username
+  });
+  res.setHeader('Access-Control-Expose-Headers', 'Time');
+  res.set({ 
+    'Time': localTime,
+    'Content-Type': 'application/json; charset=utf-8'
+  });
+
+  // 加密返回数据
+  let loginResponseData: string;
+  try {
+    loginResponseData = Encrypt(localTime,{
+      data: token,
+      meta: {status: 200, msg: '登陆成功'}
+    });
+  } catch (error) {
+    FormatLog('ERROR', dbUserData.username, '登陆接口加密数据错误');
+    return res.send({data:{token}, meta: {status: 201, msg: '登陆错误'}});
+  };
+  return res.send(loginResponseData);
 });
 
 
 // 验证码接口
-interface UserInfo {
-  username: string,
-  password: string,
-  code?: string,
-};
-
 interface CodeRequestInterface {
   username: string,
   password: string,
@@ -83,7 +111,7 @@ LoginRouter.post("/code", async (req: Request, res: Response)=>{
     if(decryptData === 'error') throw '验证码接口请求数据解密错误';
     codeRequestData = <CodeRequestInterface>decryptData
   } catch (error) {
-    FormatLog('ERROR', codeRequestData!.username, <string>error);
+    FormatLog('ERROR', (codeRequestData!.username || '未知'), <string>error);
     return res.send({data: null, meta: {status: 201, msg: error}});
   };
   
@@ -156,6 +184,7 @@ LoginRouter.post("/code", async (req: Request, res: Response)=>{
 
   return res.send({data: code, meta: {status: 200, msg: '验证码发送成功'}});
 });
+
 
 // 推出登陆接口
 LoginRouter.get('/outlogin', async (req: Request, res: Response)=>{
