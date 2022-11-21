@@ -81,7 +81,7 @@ LoginRouter.post('/login',async (req: Request, res: Response)=>{
   let loginResponseData: string;
   try {
     loginResponseData = Encrypt(localTime,{
-      data: token,
+      data: {token},
       meta: {status: 200, msg: '登陆成功'}
     });
   } catch (error) {
