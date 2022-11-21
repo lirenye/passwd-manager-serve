@@ -2,7 +2,8 @@ import { Router, Request, Response} from 'express'
 import UserModel from '../models/user.model';
 import { signToken, verifyToken } from '../utils/jwt';
 import sendEmail from '../utils/email'
-import LocalTime from '../utils/time';
+import LocalTime, { FormatLog } from '../utils/time';
+import { Decrypt } from '../utils/simple-crypto';
 
 const LoginRouter = Router()
 
@@ -64,32 +65,50 @@ interface UserInfo {
   code?: string,
 };
 
+interface CodeRequestInterface {
+  username: string,
+  password: string,
+  code?: string,
+}
 LoginRouter.post("/code", async (req: Request, res: Response)=>{
-  // 获取用户信息
-  const userInfo: UserInfo = req.body;
-  delete userInfo['code'];
+  // 获取基本请求数据
+  const ReqTime = <string>req.headers.time;
+  const ReqSecrypt = ReqTime;
+  const ReqData = <string>req.body.data;
+
+  // 解密请求数据
+  let codeRequestData:CodeRequestInterface;
+  try {
+    const decryptData = Decrypt(ReqSecrypt,ReqData);
+    if(decryptData === 'error') throw '验证码接口请求数据解密错误';
+    codeRequestData = <CodeRequestInterface>decryptData
+  } catch (error) {
+    FormatLog('ERROR', codeRequestData!.username, <string>error);
+    return res.send({data: null, meta: {status: 201, msg: error}});
+  };
+  
   // 验证用户信息
   let  dbUserData: Array<DBUserInfo>;
   try{
-    dbUserData= await UserModel.find(userInfo);
+    dbUserData= await UserModel.find({
+      username: codeRequestData.username,
+      password: codeRequestData.password
+    });
     if(!dbUserData.length) return res.send({data:null, meta: {status: 201, msg: '请检查账户信息'}});
   }catch(error){
-    console.log(error);
-    console.error('验证用户信息部分报错');
+    FormatLog('ERROR', codeRequestData.username, <string>error);
+    return res.send({data: null, meta: {status: 201, msg: '用户信息查询错误'}});
   };
 
 
   // 验证过期时间
   const NowCodeLastTime = LocalTime().toString();
-  console.log(new Date(Number(NowCodeLastTime)));
-  console.log(new Date(Number(dbUserData![0].CodeLastTime)));
   if(dbUserData![0].CodeLastTime && dbUserData![0].CodeLastTime >= NowCodeLastTime) {
     return res.send({data: null, meta: {status: 201, msg: '请稍后重试'}});
   };
 
   // 获取验证码
   const random = Math.random()
-  console.log(random);
   let code: string = Math.floor(random * 1000000000).toString();
   // 首个字符为零导致个数不正确的问题
   let codeArr = code.split('');
@@ -110,19 +129,22 @@ LoginRouter.post("/code", async (req: Request, res: Response)=>{
   const CodeExpiration: string = (localTime + 300000).toString();
   // 存储验证码
   try{
-    const {acknowledged, modifiedCount} = await UserModel.updateOne(userInfo,{
+    const {acknowledged, modifiedCount} = await UserModel.updateOne({
+      username: codeRequestData.username,
+      password: codeRequestData.password
+    },{
       $set: {
         code,
         CodeLastTime,
         CodeExpiration
       }
     });
-    console.log(code);
     if(!(acknowledged || modifiedCount)) return res.send({data: null, meta: {status: 201, msg: 'verify code error'}});
   }catch(error){
-    console.log(error);
-    console.error('存储验证码部分报错');
+    FormatLog('ERROR', codeRequestData.username, <string>error);
+    return res.send({data: null, meta: {status: 201, msg: '存储验证码部分报错'}});
   }
+  FormatLog('INFO', codeRequestData.username, `验证码: ${code}`);
   // 发送验证码
   // try {
   //   const EmailError = await sendEmail(dbUserData![0].email, code);
