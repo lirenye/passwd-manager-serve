@@ -1,8 +1,22 @@
 import { Response, Request, Router, NextFunction } from "express";
 import AccountModel from "../models/account.model";
 import { verifyToken } from "../utils/jwt";
+import { Decrypt, Encrypt } from "../utils/simple-crypto";
+import LocalTime, { FormatLog } from "../utils/time";
 
 const AccountRouter = Router();
+
+// 账户信息接口
+interface DBAccountInterface {
+  _id: string;
+  platform: string;
+  mobile: string;
+  email: string;
+  author: string;
+  username: string;
+  password: string;
+  remark: string;
+}
 
 // 添加账户信息接口
 AccountRouter.post('/add',async (req: Request, res: Response, next: NextFunction)=>{
@@ -28,47 +42,69 @@ AccountRouter.post('/add',async (req: Request, res: Response, next: NextFunction
 
 
 // 查询账户信息接口
-interface QueryFilter {
-  platform?: {
-    $regex: RegExp
-  };
-  mobile?: {
-    $regex: RegExp
-  };
-  email?: {
-    $regex: RegExp
-  };
-};
-
-interface ReqQuery {
-  type?: 'platform' | 'mobile' | 'email';
-  value?: string;
+interface QueryAccountRequestInterface {
+  type: 'platform' | 'mobile' | 'email';
+  value: string
 }
 AccountRouter.get('/info', async (req: Request, res: Response)=>{
-  const reqQuery: ReqQuery = req.query;
-  const {_id} = verifyToken(req.headers.authorization!);
-  const queryFilter:QueryFilter = {[reqQuery.type!]: {
-    $regex: new RegExp(reqQuery.value!, 'i')
-  }};
-  // queryFilter[reqQuery.type!] = { $regex: new RegExp(reqQuery.value!, 'i')}
-  // 检验参数
-  const allow = ['platform', 'mobile', 'email'];
-  
-  const queryType = Object.keys(queryFilter)
-  if(allow.indexOf(queryType[0]) === -1) return res.send({data: null, meta: {status: 201, msg: '查询参数错误'}});
+  // 获取请求数据
+  const token = <string>req.headers.authorization;
+  const tokenInfo = verifyToken(token);
+  const reqData = <string>req.query.data;
+  const reqTime = <string>req.headers.time;
+  const reqSecret = reqTime;
+
+
+  // 解密请求数据
+  let queryAccountRequestData:QueryAccountRequestInterface;
+  try {
+    const decryptData = Decrypt(reqSecret, reqData);
+    if( decryptData === 'error') throw '账户查询接口解密错误';
+    queryAccountRequestData = <QueryAccountRequestInterface>decryptData;
+  } catch (error) {
+    FormatLog('ERROR', tokenInfo.username, <string>error);
+    return res.send({data: null, meta: {status: 201, msg: '查询错误'}});
+  };
+
+  // 格式化数据库查询语句
+  const queryFilter = {
+    [queryAccountRequestData.type]: {
+      $regex: new RegExp(queryAccountRequestData.value)
+    }
+  };
 
   // 查询规则
-  const queryData = Object.assign(queryFilter, {author:_id});
-  // console.log(queryData);
+  const queryData = Object.assign(queryFilter, {author:tokenInfo._id});
+
+
   // 查询数据
+  let dbAccountDataArray:Array<DBAccountInterface>;
   try{
-    var dbData = await AccountModel.find(queryData);
+    dbAccountDataArray = await AccountModel.find(queryData);
   }catch(error){
+    FormatLog('ERROR', tokenInfo.username, '查询账户接口查询数据错误');
     return res.send({data: null, meta: { status: 201, msg: '查询错误'}})
   };
 
+  // 响应数据准备
+  const localTime = LocalTime().toString();
+  res.setHeader('Access-Control-Expose-Headers', 'Time');
+  res.set({
+    'Time': localTime,
+    'Content-Type': 'application/json; charset=utf-8'
+  });
+
+  // 加密响应数据
+  const queryAccountResponseData = Encrypt(localTime, {
+    data: dbAccountDataArray,
+    total: dbAccountDataArray.length,
+    meta: {
+      status: 200,
+      msg: '查询成功'
+    }
+  });
   // 返回查询数据
-  return res.send({data: dbData, total: dbData.length, meta: {status: 200, msg: '查询成功'}})
+  res.send(queryAccountResponseData);
 });
 
 interface ReqModify {
