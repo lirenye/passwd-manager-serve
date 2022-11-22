@@ -78,16 +78,10 @@ LoginRouter.post('/login',async (req: Request, res: Response)=>{
   });
 
   // 加密返回数据
-  let loginResponseData: string;
-  try {
-    loginResponseData = Encrypt(localTime,{
-      data: {token},
-      meta: {status: 200, msg: '登陆成功'}
-    });
-  } catch (error) {
-    FormatLog('ERROR', dbUserData.username, '登陆接口加密数据错误');
-    return res.send({data:{token}, meta: {status: 201, msg: '登陆错误'}});
-  };
+  const loginResponseData = Encrypt(localTime,{
+    data: {token},
+    meta: {status: 200, msg: '登陆成功'}
+  });
   return res.send(loginResponseData);
 });
 
