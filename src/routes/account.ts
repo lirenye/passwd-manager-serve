@@ -107,6 +107,9 @@ AccountRouter.get('/info', async (req: Request, res: Response)=>{
   res.send(queryAccountResponseData);
 });
 
+
+
+// 修改账户信息接口
 interface ReqModify {
   _id?: string;
   author?: string;
@@ -117,33 +120,49 @@ interface ReqModify {
   mobile: string;
   remark: string;
 }
-
-// 修改账户信息接口
+interface ModifyAccountRequestInterface {
+  _id: string;
+  author?: string;
+  platform: string;
+  username: string;
+  password: string;
+  email: string;
+  mobile: string;
+  remark: string;
+};
 AccountRouter.post('/modify',async (req: Request, res: Response)=>{
-  // parse token info
-  const {_id: userId} = verifyToken(req.headers.authorization!);
-
-  // handle request params
-  const account:ReqModify = {...req.body};
-  const accountId = account._id;
-  delete account['_id'];
-  account['author'] = userId;
-
-  // validation request params
+  // 获取请求数据
+  const token = <string>req.headers.authorization;
+  const tokenInfo = verifyToken(token);
+  const reqData = <string>req.body.data;
+  const reqSecret = <string>req.headers.time;
+  
+  // 解密请求数据
+  let modifyAccountRequestData:ModifyAccountRequestInterface;
   try {
-    await new AccountModel(account).validate();
+    const decryptData = Decrypt(reqSecret, reqData);
+    if(decryptData === 'error') throw '修改账户接口解密请求数据错误';
+    modifyAccountRequestData = <ModifyAccountRequestInterface>decryptData;
   } catch (error) {
-    return res.send({data: error, meta: {status: 201, msg: '参数未通过验证'}});
+    FormatLog('ERROR', tokenInfo.username, <string>error);
+    return res.send({data: null, meta: {status: 201, msg: '修改失败'}});
   };
 
-  // delete author
-  delete account['author'];
-
-  // go update account info
+  // 修改数据库数据
   try {
     const {acknowledged} = await AccountModel.updateOne(
-      {_id: accountId, author: userId},
-      {$set: account}
+      {
+        _id: modifyAccountRequestData._id,
+        author: tokenInfo._id
+      },
+      {$set: {
+        platform: modifyAccountRequestData.platform,
+        username: modifyAccountRequestData.username,
+        password: modifyAccountRequestData.password,
+        email: modifyAccountRequestData.email,
+        mobile: modifyAccountRequestData.mobile,
+        remark: modifyAccountRequestData.remark
+      }}
     );
     if(acknowledged) return res.send({data: null, meta: {status: 200, msg: '修改成功'}});
     else return res.send({data: null, meta: {status: 201, msg: '修改失败'}});
