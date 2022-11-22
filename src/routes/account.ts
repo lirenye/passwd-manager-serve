@@ -66,6 +66,7 @@ AccountRouter.post('/add',async (req: Request, res: Response, next: NextFunction
 });
 
 
+
 // 查询账户信息接口
 interface QueryAccountRequestInterface {
   type: 'platform' | 'mobile' | 'email';
@@ -188,20 +189,35 @@ AccountRouter.post('/modify',async (req: Request, res: Response)=>{
 
 
 
-
 // 删除账户信息接口
+interface DeleteAccountRequestInterface {
+  _id: string;
+}
 AccountRouter.get('/delete', async (req: Request, res: Response)=>{
-  // parse token info
-  const {_id: userId} = verifyToken(req.headers.authorization!);
-  // get account ObjectId
-  const accountId: string = req.query._id as string;
+  // 获取请求数据
+  const token = <string>req.headers.authorization;
+  const tokenInfo = verifyToken(token);
+  const reqData = <string>req.query.data;
+  const reqTime = <string>req.headers.time;
+  const reqSecret = reqTime;
 
-  // validation accountId
-  if(!accountId) return res.send({data: null, meta: {status: 201, msg: '删除失败'}});
-
-  // delete account info
+  // 解密请求数据
+  let deleteAccountRequestData:DeleteAccountRequestInterface;
   try {
-    const {acknowledged, deletedCount} = await AccountModel.deleteOne({_id: accountId, author: userId});
+    const decryptData = Decrypt(reqSecret, reqData);
+    if(decryptData === 'error') throw '删除账户接口解密请求数据失败';
+    deleteAccountRequestData = <DeleteAccountRequestInterface>decryptData;
+  } catch (error) {
+    FormatLog('ERROR', tokenInfo.username, <string>error);
+    return res.send({data: null, meta: {status: 201, msg: '删除失败'}});
+  };
+
+  // 从数据库中删除账户信息
+  try {
+    const {acknowledged, deletedCount} = await AccountModel.deleteOne({
+      _id: deleteAccountRequestData._id,
+      author: tokenInfo._id
+    });
     if(acknowledged && deletedCount == 1) return res.send({data: null, meta: {status: 200, msg: '删除成功'}});
     else return res.send({data: null, meta: {status: 201, msg: '删除失败'}});
   } catch (error) {
