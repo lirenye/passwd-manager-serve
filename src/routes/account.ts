@@ -6,7 +6,7 @@ import LocalTime, { FormatLog } from "../utils/time";
 
 const AccountRouter = Router();
 
-// 账户信息接口
+// 数据库账户信息接口
 interface DBAccountInterface {
   _id: string;
   platform: string;
@@ -19,22 +19,47 @@ interface DBAccountInterface {
 }
 
 // 添加账户信息接口
+interface AddAccountRequestInterface {
+  platform: string;
+  username: string;
+  password: string;
+  email: string;
+  mobile: string;
+  remark: string;
+}
 AccountRouter.post('/add',async (req: Request, res: Response, next: NextFunction)=>{
-  const token = verifyToken(req.headers.authorization!);
-  const saveData = Object.assign(req.body,{ author: token._id});
-  // 检验数据
-  try {
-    await new AccountModel(saveData).validate();
-  } catch (error) {
-    return res.send({data: error, meta: {status: 201, msg: '参数未通过验证'}});
-  };
+  // 获取基本信息
+  const token = <string>req.headers.authorization;
+  const tokenInfo = verifyToken(token);
+  const reqData = <string>req.body.data;
+  const reqTime = <string>req.headers.time;
+  const reqSecret = reqTime;
 
+  // 解密请求数据
+  let addAccountRequestData:AddAccountRequestInterface;
+  try {
+    const decryptData = Decrypt(reqSecret, reqData);
+    if(decryptData === 'error') throw '添加账户接口解密请求数据报错';
+    addAccountRequestData = <AddAccountRequestInterface>decryptData;
+  } catch (error) {
+    FormatLog('ERROR', tokenInfo.username, <string>error);
+    return res.send({data: null, meta: {status: 201, msg: '添加失败'}});
+  }
 
   // 存储数据
   try {
-    await AccountModel.create(req.body);
+    await AccountModel.create({
+      author: tokenInfo._id,
+      platform: addAccountRequestData.platform,
+      username: addAccountRequestData.username,
+      password: addAccountRequestData.password,
+      email: addAccountRequestData.email,
+      mobile: addAccountRequestData.mobile,
+      remark: addAccountRequestData.remark
+    });
   } catch (error) {
-    return res.send({data: null, meta: {status: 201, msg: '存储失败'}});
+    FormatLog('ERROR', tokenInfo.username, '添加账户接口增加失败')
+    return res.send({data: null, meta: {status: 201, msg: '添加失败'}});
   };
 
   return res.send({data: null, meta: {status: 200, msg: '保存成功'}});
@@ -110,19 +135,9 @@ AccountRouter.get('/info', async (req: Request, res: Response)=>{
 
 
 // 修改账户信息接口
-interface ReqModify {
-  _id?: string;
-  author?: string;
-  platform: string;
-  username: string;
-  password: string;
-  email: string;
-  mobile: string;
-  remark: string;
-}
 interface ModifyAccountRequestInterface {
   _id: string;
-  author?: string;
+  authors: string;
   platform: string;
   username: string;
   password: string;
@@ -170,6 +185,9 @@ AccountRouter.post('/modify',async (req: Request, res: Response)=>{
     return res.send({data: null, meta: {status: 200, msg: '修改失败'}});
   };
 });
+
+
+
 
 // 删除账户信息接口
 AccountRouter.get('/delete', async (req: Request, res: Response)=>{
