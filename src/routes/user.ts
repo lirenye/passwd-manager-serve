@@ -47,17 +47,44 @@ UserRouter.post('/modifypassword', async (req: Request, res: Response, next: Nex
 });
 
 
+
+// 修改用户电子邮箱
+interface ModifyEmailRequestInterface {
+  email: string;
+}
 UserRouter.post('/modifyemail', async (req: Request, res: Response, next: NextFunction)=>{
-  const email = req.body.email;
-  const token = req.headers.authorization;
-  // 从token获取用户信息
-  const {_id, username} = verifyToken(token!);
+  // 获取请求数据
+  const token = <string>req.headers.authorization;
+  const tokenInfo = verifyToken(token);
+  const reqData = <string>req.body.data;
+  const reqTime = <string>req.headers.time;
+  const reqSecret = reqTime;
+
+  // 解密请求数据
+  let modifyEmalRequestData:ModifyEmailRequestInterface;
+  try {
+    const decryptData = Decrypt(reqSecret, reqData);
+    if(decryptData === 'error') throw '修改用户电子邮箱接口解密请求数据失败';
+    modifyEmalRequestData = <ModifyEmailRequestInterface>decryptData;
+  } catch (error) {
+    FormatLog('ERROR', tokenInfo.username, <string>error);
+    return res.send({data: null, meta: {status: 201, msg: '电子邮箱修改失败'}});
+  };
+
   // 更新数据库信息
   try {
-    await UserModel.updateOne({_id, username}, {email});
+    await UserModel.updateOne(
+      {
+        _id: tokenInfo._id,
+        username: tokenInfo.username
+      },
+      {
+        email: modifyEmalRequestData.email
+      }
+    );
   } catch (error) {
-    console.log(error);
-    console.log('更新电子邮箱操作出错');
+    FormatLog('ERROR', tokenInfo.username, <string>error);
+    return res.send({data: null, meta: {status: 201, msg: '电子邮箱修改失败'}});
   };
   // 返回信息
   res.send({data: null, meta: {status: 200, msg: '电子邮箱修改成功'}});
